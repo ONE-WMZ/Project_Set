@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户页面</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 全局样式 */
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4cc9f0;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ff0000;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --border-radius: 12px;
+            --box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 3px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* 信息块样式 */
+        .block {
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 25px;
+            background: white;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+            border-top: 4px solid var(--primary-color);
+        }
+
+        .block:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 地图容器样式 */
+        .map-container {
+            height: 300px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        #location-map {
+            height: 100%;
+            width: 100%;
+        }
+
+        /* 统一的信息卡片样式 - 用于经纬度和状态信息 */
+        .info-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .info-card {
+            flex: 1;
+            min-width: 80px;
+            background: rgba(67, 97, 238, 0.1);
+            padding-right: 0px;
+            padding-left: 0px;
+            padding-top: 15px;
+            padding-bottom: 15px;
+            border-radius: 8px;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .info-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-card-label {
+            display: block;
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .info-card-value {
+            font-weight: 500;
+            font-size: 1.1em;
+        }
+
+        /* 状态特定的颜色 */
+        .info-card.status-online {
+            background: rgba(40, 167, 69, 0.1);
+        }
+        .info-card.status-online .info-card-value {
+            color: var(--success-color);
+        }
+
+        .info-card.status-offline {
+            background: rgba(220, 53, 69, 0.1);
+        }
+        .info-card.status-offline .info-card-value {
+            color: var(--danger-color);
+        }
+
+        .info-card.status-warning {
+            background: rgba(255, 193, 7, 0.1);
+        }
+        .info-card.status-warning .info-card-value {
+            color: var(--warning-color);
+        }
+
+        /* 地址信息样式 */
+        .address-container {
+            margin-top: 15px;
+            background: rgba(67, 97, 238, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .address-label {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .address-value {
+            font-weight: 500;
+            color: var(--primary-color);
+            word-break: break-word;
+            line-height: 1.5;
+        }
+
+        /* 用户信息网格布局 */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            padding: 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: #6c757d;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .info-value {
+            font-weight: 400;
+            color: var(--dark-color);
+            word-break: break-word;
+        }
+
+        /* 无数据提示样式 */
+        .no-data {
+            text-align: center;
+            color: #adb5bd;
+            font-style: italic;
+            padding: 30px 20px;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 8px;
+        }
+
+        /* 按钮样式 */
+        .btn-container {
+            margin-top: 40px;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+            letter-spacing: 0.5px;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(67, 97, 238, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                margin: 20px auto;
+            }
+
+            .block {
+                padding: 20px;
+            }
+
+            .map-container {
+                height: 250px;
+            }
+
+            .info-cards {
+                flex-direction: column;
+            }
+
+            .info-card {
+                min-width: 100%;
+                margin: 5px 0;
+            }
+        }
+        .updated {
+            animation: highlight 1s;
+        }
+        @keyframes highlight {
+            0% { background-color: rgba(76, 201, 240, 0.3); }
+            100% { background-color: transparent; }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <!-- 位置信息块 -->
+    <div class="block">
+        <h2>当前位置</h2>
+        <div class="map-container">
+            <div id="location-map"></div>
+        </div>
+        <div class="info-cards">
+            <div class="info-card">
+                <span class="info-card-label">经度 (X)</span>
+                <span class="info-card-value" id="position-x">--</span>
+            </div>
+            <div class="info-card">
+                <span class="info-card-label">纬度 (Y)</span>
+                <span class="info-card-value" id="position-y">--</span>
+            </div>
+        </div>
+        <div class="address-container">
+            <div class="address-label">定位地址</div>
+            <div class="address-value" id="address"></div>
+        </div>
+    </div>
+
+    <!-- 状态信息块 -->
+    <div class="block">
+        <h2>设备状态</h2>
+        <div class="info-cards">
+            <div class="info-card" id="device-status-card">
+                <span class="info-card-label">设备状态</span>
+                <span class="info-card-value" id="device-status">--</span>
+            </div>
+            <div class="info-card" id="user-status-card">
+                <span class="info-card-label">用户状态</span>
+                <span class="info-card-value" id="user-status">--</span>
+            </div>
+            <div class="info-card">
+                <span class="info-card-label">最后更新</span>
+                <span class="info-card-value" id="last-update">--</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户信息 -->
+    <div class="block">
+        <h2>个人信息</h2>
+        {% if user_info %}
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">姓名</div>
+                <div class="info-value">{{ user_info.Name }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">年龄</div>
+                <div class="info-value">{{ user_info.Age }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">电话</div>
+                <div class="info-value">{{ user_info.Phone }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">邮箱</div>
+                <div class="info-value">{{ user_info.Email }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">账号</div>
+                <div class="info-value">{{ user_info.Account }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">注册时间</div>
+                <div class="info-value">{{ user_info.enroll_time.strftime('%Y-%m-%d') if user_info.enroll_time else '未注册' }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">用户ID</div>
+                <div class="info-value">{{ user_info.ID }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">设备ID</div>
+                <div class="info-value">{{ user_info.Device_id }}</div>
+            </div>
+
+        </div>
+        {% else %}
+        <div class="no-data">暂无用户信息</div>
+        {% endif %}
+    </div>
+
+    <!-- 退出登录按钮 -->
+    <div class="btn-container">
+        <button onclick="location.href='/logout'">退出登录</button>
+    </div>
+</div>
+
+<script src="https://webapi.amap.com/loader.js"></script>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+    let map = null;
+    let marker = null;
+    let deviceId = "{{ user_info.Device_id if user_info else '' }}"; // 从后端获取设备ID
+    let socket = null;
+    let mapReady = false;
+
+    function initMap(x = 116.404, y = 39.915) {
+        AMapLoader.load({
+            key: "", // 高德地图API Key
+            version: "2.0",
+            plugins: ["AMap.ControlBar"]
+        }).then((AMap) => {
+            map = new AMap.Map('location-map', {
+                zoom: 17,
+                center: [x, y],
+                viewMode: '2D'
+            });
+
+            marker = new AMap.Marker({
+                position: [x, y],
+                map: map,
+                title: '当前位置'
+            });
+
+            map.addControl(new AMap.ControlBar({
+                showZoomBar: true,
+                showControlButton: true,
+                position: { right: '10px', top: '10px' }
+            }));
+
+            mapReady = true;
+        }).catch(handleMapError);
+    }
+
+    function initWebSocket() {
+        {#socket = io();#}
+        const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const socket = io(protocol, {
+            transports: ['websocket'],
+            withCredentials: true,
+        });
+        socket.on('connect', () => {
+            console.log('[WebSocket] 连接成功');
+            if (deviceId) {
+                // 加入设备房间
+                socket.emit('join', { device_id: deviceId });
+                console.log('[WebSocket] 加入房间：', deviceId);
+            } else {
+                console.warn('[WebSocket] deviceId为空，无法join房间');
+            }
+        });
+
+        socket.on('disconnect', () => {
+            console.warn('[WebSocket] 断开连接');
+            updateDeviceStatus(0); // 设备离线
+            updateUserStatus(0, 0); // 用户状态更新为离线
+        });
+        // 定义一个全局变量用于存储定时器 ID
+        let refreshTimeout;
+
+        // WebSocket 监听 'update_data' 事件
+        socket.on('update_data', (data) => {
+            console.log('[WebSocket] 收到更新:', data);
+            if (!data) return;
+
+            // 每次接收到数据时，清除之前的定时器并重新设置
+            clearTimeout(refreshTimeout);
+            refreshTimeout = setTimeout(() => {
+                console.log('[WebSocket] 超过 20 秒未收到更新，刷新页面...');
+                location.reload(); // 刷新页面
+            }, 20000); // 设置超时时间为 20 秒
+
+            // 更新页面内容
+            document.getElementById('last-update').textContent = formatTimestamp(data.time_stamp || data.timestamp);
+            updateDeviceStatus(data.device_status || 1); // 默认在线
+            updateUserStatus(data.user_data, data.device_status || 1);
+
+            if (data.position_x && data.position_y) {
+                updatePosition(data.position_x, data.position_y, data.address);
+            }
+
+            highlightUpdates();
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('[WebSocket] 连接错误:', error);
+            const errorDiv = document.createElement('div');
+            errorDiv.style.color = 'red';
+            errorDiv.textContent = 'WebSocket连接错误，请检查网络或稍后重试';
+            document.body.appendChild(errorDiv);
+        });
+    }
+
+    function updateDeviceStatus(status) {
+        const card = document.getElementById('device-status-card');
+        const value = document.getElementById('device-status');
+
+        status = parseInt(status) || 0;
+
+        if (status === 1) {
+            value.textContent = '在线';
+            card.className = 'info-card status-online';
+            if (marker) marker.setContent(null);
+        } else {
+            value.textContent = '离线';
+            card.className = 'info-card status-offline';
+            if (marker) {
+                marker.setContent(
+                    '<div style="background: #dc3545; color: white; padding: 2px 5px; border-radius: 3px;">离线</div>'
+                );
+            }
+        }
+    }
+
+    function updateUserStatus(userStatus, deviceStatus) {
+        const card = document.getElementById('user-status-card');
+        const value = document.getElementById('user-status');
+
+        userStatus = parseInt(userStatus) || 0;
+        deviceStatus = parseInt(deviceStatus) || 0;
+
+        if (deviceStatus === 1) {
+            value.textContent = userStatus === 0 ? '正常' : '异常';
+            card.className = userStatus === 0 ? 'info-card status-online' : 'info-card status-warning';
+        } else {
+            value.textContent = '--';
+            card.className = 'info-card status-offline';
+        }
+    }
+
+    function updatePosition(x, y, address) {
+        document.getElementById('position-x').textContent = x;
+        document.getElementById('position-y').textContent = y;
+        document.getElementById('address').textContent = address || '定位中...';
+
+        if (mapReady) {
+            updateMapPosition(x, y);
+        } else {
+            initMap(x, y);
+        }
+    }
+
+    function updateMapPosition(x, y) {
+        if (!map || !marker) return;
+
+        map.setCenter([x, y]);
+        marker.setPosition([x, y]);
+    }
+
+    function formatTimestamp(timestamp) {
+        if (!timestamp) return '--';
+        try {
+            const date = new Date(timestamp);
+            if (isNaN(date.getTime())) return timestamp;
+
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: false
+            }).replace(/\//g, '-');
+        } catch (e) {
+            return timestamp;
+        }
+    }
+
+    function highlightUpdates() {
+        const elements = document.querySelectorAll('.info-card-value, .address-value');
+        elements.forEach(el => {
+            el.classList.add('updated');
+            setTimeout(() => el.classList.remove('updated'), 1000);
+        });
+    }
+
+    function handleMapError(e) {
+        console.error('[地图] 加载失败:', e);
+        document.getElementById('location-map').innerHTML = `
+            <div style="height:100%; display:flex; align-items:center; justify-content:center; color:#dc3545; background:#f8f9fa; padding:20px; text-align:center;">
+                <div>
+                    <p>地图加载失败，请刷新重试</p>
+                    <button onclick="initMap()" style="margin-top:10px; padding:5px 15px; background:#4361ee; color:white; border:none; border-radius:4px; cursor:pointer;">
+                        重新加载
+                    </button>
+                </div>
+            </div>`;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const initialData = JSON.parse('{{ initial_data|tojson|safe }}'); // 从后端获取初始数据
+
+        initMap(initialData.position_x, initialData.position_y);
+        initWebSocket();
+
+        updateDeviceStatus(initialData.device_status);
+        updateUserStatus(initialData.user_status, initialData.device_status);
+        updatePosition(initialData.position_x, initialData.position_y, initialData.address);
+        document.getElementById('last-update').textContent = formatTimestamp(initialData.timestamp);
+    });
+</script>
+
+
+
+</body>
+</html>
