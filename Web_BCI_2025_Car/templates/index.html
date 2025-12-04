@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask 控制小车</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f5f5f5;
+            padding-top: 40px;
+        }
+        h1 { color: #333; }
+        .btn {
+            width: 100px;
+            height: 100px;
+            font-size: 18px;
+            margin: 10px;
+            border: none;
+            border-radius: 12px;
+            background: #2196F3;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover { background: #0b7dda; }
+        .btn:active { transform: scale(0.95); }
+        #stop { background: #f44336; }
+        #stop:hover { background: #d32f2f; }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚗 Flask 遥控小车</h1>
+    <p>控制 ESP32 ({{ esp32_ip }})</p>
+
+    <div>
+        <button class="btn" onclick="sendCmd('forward')">↑<br>前进</button>
+    </div>
+    <div>
+        <button class="btn" onclick="sendCmd('left')">←<br>左转</button>
+        <button id="stop" class="btn" onclick="sendCmd('stop')">■<br>停止</button>
+        <button class="btn" onclick="sendCmd('right')">→<br>右转</button>
+    </div>
+    <div>
+        <button class="btn" onclick="sendCmd('backward')">↓<br>后退</button>
+    </div>
+
+    <div class="status" id="status">就绪</div>
+
+    <script>
+        async function sendCmd(action) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = `发送: ${action}...`;
+            try {
+                const res = await fetch('/control', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    statusEl.textContent = `✅ 已执行: ${action}`;
+                } else {
+                    statusEl.textContent = `❌ 错误: ${data.error}`;
+                }
+            } catch (e) {
+                statusEl.textContent = `⚠️ 网络错误: ${e.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
